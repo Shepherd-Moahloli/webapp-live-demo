@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Web App Live Demo</title>
+    <style>
+      body {
+        font-family: system-ui, Arial;
+        padding: 40px;
+        color: #333;
+      }
+      .palette {
+        display: flex;
+        gap: 12px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+      }
+      .swatch {
+        width: 80px;
+        height: 80px;
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: 700;
+      }
+      form {
+        margin-top: 24px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      input[type="text"] {
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+      }
+      button {
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 0;
+        background: #007acc;
+        color: #fff;
+        cursor: pointer;
+      }
+      #msg {
+        margin-left: 12px;
+        color: green;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Web App Live Demo</h1>
+    <p>Colors API demo.</p>
+
+    <div>
+      <strong>Available colors</strong>
+      <div id="palette" class="palette" aria-live="polite"></div>
+    </div>
+
+    <form id="addForm">
+      <input
+        id="colorInput"
+        type="text"
+        placeholder="#RRGGBB or color name"
+        required
+      />
+      <button type="submit">Add color</button>
+      <span id="msg"></span>
+    </form>
+
+    <script>
+      async function loadColors() {
+        try {
+          const res = await fetch("/api/colors");
+          const data = await res.json();
+          const palette = document.getElementById("palette");
+          palette.innerHTML = "";
+          data.forEach((c) => {
+            const d = document.createElement("div");
+            d.className = "swatch";
+            d.style.background = c;
+            d.textContent = c;
+            palette.appendChild(d);
+          });
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      document
+        .getElementById("addForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const input = document.getElementById("colorInput");
+          const color = input.value.trim();
+          if (!color) return;
+          try {
+            const res = await fetch("/api/colors", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ color }),
+            });
+            if (res.status === 201) {
+              document.getElementById("msg").textContent = "Added";
+              input.value = "";
+              await loadColors();
+              setTimeout(
+                () => (document.getElementById("msg").textContent = ""),
+                1200,
+              );
+            } else {
+              document.getElementById("msg").textContent = "Error";
+            }
+          } catch (err) {
+            console.error(err);
+            document.getElementById("msg").textContent = "Error";
+          }
+        });
+
+      loadColors();
+    </script>
+  </body>
+</html>
